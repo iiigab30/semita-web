@@ -26,8 +26,7 @@
 
 <main class="container my-4">
 
-  <div id="aviso" class="alert alert-warning d-none"></div>
-  <div id="resultado" class="alert alert-info">Iniciando conexión con la API...</div>
+  <div id="aviso" class="alert alert-warning d-none">Sin conexión con la API.</div>
 
   <div class="row g-4">
     <!-- Distancia -->
@@ -62,9 +61,6 @@
           <p id="notaAuto" class="text-muted small mt-3 d-none">
             En modo automático los botones están deshabilitados: el sensor controla el motor.
           </p>
-          <p class="text-muted small mt-2 mb-0">
-            En modo manual, presiona un botón y espera la confirmación del Arduino.
-          </p>
         </div>
       </div>
     </div>
@@ -76,20 +72,20 @@
     <div class="row g-4 text-center">
       <!-- Cambia las fotos y apellidos por los de tu grupo -->
       <div class="col-6 col-md-3 integrante">
-        <img src="img/integrante1.jpeg" alt="Integrante 1">
-        <p class="mt-2 fw-bold">Alas</p>
+        <img src="img/integrante1.jpg" alt="Integrante 1">
+        <p class="mt-2 fw-bold">APELLIDO 1</p>
       </div>
       <div class="col-6 col-md-3 integrante">
         <img src="img/integrante2.jpg" alt="Integrante 2">
-        <p class="mt-2 fw-bold">Guevara</p>
+        <p class="mt-2 fw-bold">APELLIDO 2</p>
       </div>
       <div class="col-6 col-md-3 integrante">
         <img src="img/integrante3.jpg" alt="Integrante 3">
-        <p class="mt-2 fw-bold">Tobar</p>
+        <p class="mt-2 fw-bold">APELLIDO 3</p>
       </div>
       <div class="col-6 col-md-3 integrante">
         <img src="img/integrante4.jpg" alt="Integrante 4">
-        <p class="mt-2 fw-bold">Cortéz</p>
+        <p class="mt-2 fw-bold">APELLIDO 4</p>
       </div>
     </div>
   </section>
@@ -99,41 +95,26 @@
 
 <script>
   // URL de tu API desplegada (sin "/" al final). Mientras pruebas en tu PC: http://localhost:3000
-  const API = "https://semita-api-jdc4.onrender.com";
+  const API = "http://localhost:3000";
 
   const $ = (id) => document.getElementById(id);
 
   async function post(ruta, datos) {
-    $("resultado").className = "alert alert-info";
-    $("resultado").textContent = "Enviando orden...";
-
-    try {
-      const r = await fetch(API + ruta, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(datos),
-        cache: "no-store"
-      });
-
+    const r = await fetch(API + ruta, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(datos)
+    });
+    if (!r.ok) {
       const e = await r.json().catch(() => ({}));
-
-      if (!r.ok) {
-        throw new Error(e.error || `Error HTTP ${r.status}`);
-      }
-
-      $("resultado").className = "alert alert-success";
-      $("resultado").textContent = "Orden aceptada por la API.";
-      await actualizar();
-    } catch (err) {
-      $("resultado").className = "alert alert-danger";
-      $("resultado").textContent = "No se pudo enviar la orden: " + err.message;
+      alert(e.error || "Error al enviar el comando");
     }
+    actualizar();
   }
 
   async function actualizar() {
     try {
-      const r = await fetch(API + "/api/estado", { cache: "no-store" });
-      if (!r.ok) throw new Error(`API HTTP ${r.status}`);
+      const r = await fetch(API + "/api/estado");
       const e = await r.json();
       $("aviso").classList.add("d-none");
 
@@ -150,19 +131,8 @@
       $("btnManual").classList.toggle("active", !auto);
       ["btnIzq", "btnDer", "btnStop"].forEach((id) => ($(id).disabled = auto));
       $("notaAuto").classList.toggle("d-none", !auto);
-
-      if (e.dispositivoConectado) {
-        $("resultado").className = "alert alert-success";
-        $("resultado").textContent = "API funcionando. Arduino conectado.";
-      } else {
-        $("resultado").className = "alert alert-warning";
-        $("resultado").textContent = "API funcionando, pero el Arduino aún no reporta datos.";
-      }
     } catch (err) {
-      $("aviso").textContent = "Sin conexión con la API: " + err.message;
       $("aviso").classList.remove("d-none");
-      $("resultado").className = "alert alert-danger";
-      $("resultado").textContent = "Revisa la URL de Render y la conexión a Internet.";
     }
   }
 
